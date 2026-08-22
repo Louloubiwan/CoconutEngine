@@ -69,15 +69,23 @@ impl State {
 
 
         let surface_caps = surface.get_capabilities(&adapter);
-        let surface_format = surface_caps.formats.iter()
-            .find(|f| f.is_srgb())
-            .copied()
-            .unwrap_or(surface_caps.formats[0]);
+        let surface_format = surface_caps.formats.iter().find(|f| f.is_srgb()).copied().unwrap_or(surface_caps.formats[0]);
 
          let present_mode = if surface_caps.present_modes.contains(&wgpu::PresentMode::Fifo) {
          wgpu::PresentMode::Fifo
         } else {
         surface_caps.present_modes[0]}; // cap FPS at the monitor refresh rate
+        
+        
+        // DEBUG & PRINTS
+        //
+        let limits = adapter.limits(); // determine the limits of the dimension, can be caused by browser           
+        let caps = surface.get_capabilities(&adapter); // check what feature the GPU support
+        //
+        println!("INFO GPU : {:?}", caps);
+        println!("MAX RESOLUTION : {:?}", limits);
+
+
     
 
         let config = wgpu::SurfaceConfiguration {
@@ -91,9 +99,6 @@ impl State {
             desired_maximum_frame_latency: 2,
             color_space: wgpu::SurfaceColorSpace::Auto,
         };
-        
-        let caps = surface.get_capabilities(&adapter); // check what feature the GPU support
-        println!("INFO GPU : {:?}", caps);
 
         let _modes = &surface_caps.present_modes;
 
@@ -110,8 +115,9 @@ impl State {
 
     pub fn resize(&mut self, width: u32, height: u32) {
         if width > 0 && height > 0 {
-            self.config.width = width;
-            self.config.height = height;
+             let max = 2048; // ajoute une limite pour WebGL
+            self.config.width = width.min(max);
+            self.config.height = height.min(max);
             self.surface.configure(&self.device, &self.config);
             self.is_surface_configured = true;
         }
