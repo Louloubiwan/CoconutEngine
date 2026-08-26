@@ -8,6 +8,9 @@ use winit::{
     window::Window,
 };
 
+use std::thread;
+use std::time::Duration;
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 #[cfg(target_arch = "wasm32")]
@@ -233,6 +236,13 @@ impl App {
             proxy,
         }
     }
+
+    
+    pub fn handle_mouse_moved(&mut self, position: winit::dpi::PhysicalPosition<f64>){
+        thread::sleep(Duration::from_secs(0.5));
+        println!("MOVED");
+
+    }
 }
 
 
@@ -302,6 +312,7 @@ impl ApplicationHandler<State> for App {
         self.state = Some(event);
     }
 
+
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -316,6 +327,8 @@ impl ApplicationHandler<State> for App {
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => state.resize(size.width, size.height),
+            WindowEvent::CursorMoved { position, .. } => {
+                self.handle_mouse_moved(position);}
             WindowEvent::RedrawRequested => {
             state.update();
             match state.render() {
