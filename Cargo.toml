@@ -10,6 +10,7 @@ strip = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+path = "src/core/lib.rs"
 
 [[bin]]
 name = "CoconutEngine"

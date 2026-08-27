@@ -1,33 +1,14 @@
+use crate::State;
 use std::sync::Arc;
-
 use winit::{
-    application::ApplicationHandler,
-    event::*,
-    event_loop::{ActiveEventLoop, EventLoop},
-    keyboard::{KeyCode, PhysicalKey},
+    event_loop::ActiveEventLoop,
+    keyboard::KeyCode,
     window::Window,
 };
 
-use std::thread;
-use std::time::Duration;
-
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
-#[cfg(target_arch = "wasm32")]
-use winit::platform::web::EventLoopExtWebSys;
-
-// State de l'éditeur
-pub struct State {
-    surface: wgpu::Surface<'static>,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
-    is_surface_configured: bool,
-    window: Arc<Window>,
-}
 
 impl State {
-    async fn new(window: Arc<Window>) -> anyhow::Result<State> {
+    pub async fn new(window: Arc<Window>) -> anyhow::Result<State> {
         let size = window.inner_size();
 
         // instance is a handle to our GPU
@@ -127,16 +108,28 @@ impl State {
     }
 
     // Escape exit the app
-    fn handle_key(&self, event_loop: &ActiveEventLoop, code: KeyCode, is_pressed: bool) {
+    pub fn handle_key(&self, event_loop: &ActiveEventLoop, code: KeyCode, is_pressed: bool) {
     match (code, is_pressed) {
         (KeyCode::Escape, true) => event_loop.exit(),
         _ => {}
         }
     }
 
+        
+    pub fn handle_mouse_moved(&mut self, _position: winit::dpi::PhysicalPosition<f64>){
+
+        println!("MOUSE MOVED");
+    
+
+    }
+
+
+
+
+
 // ------------------ RENDER---------------------
     //
-   fn render(&mut self) -> anyhow::Result<()> {
+   pub fn render(&mut self) -> anyhow::Result<()> {
      self.window.request_redraw();
 
      // We can't render unless the surface is configured
@@ -181,7 +174,7 @@ impl State {
                 depth_slice: None,
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(wgpu::Color {
-                        r: 0.1,
+                        r: 0.6,
                         g: 0.2,
                         b: 0.3,
                         a: 1.0,
@@ -204,7 +197,7 @@ impl State {
 
      }
 
-   fn update(&mut self) {
+   pub fn update(&mut self) {
     // remo
     }
 
@@ -212,189 +205,3 @@ impl State {
 }
 
 // --------------------
-
-
-
-
-
-
-
-
-pub struct App {
-    #[cfg(target_arch = "wasm32")]
-    proxy: Option<winit::event_loop::EventLoopProxy<State>>,
-    state: Option<State>,
-}
-
-impl App {
-    pub fn new(#[cfg(target_arch = "wasm32")] event_loop: &EventLoop<State>) -> Self {
-        #[cfg(target_arch = "wasm32")]
-        let proxy = Some(event_loop.create_proxy());
-        Self {
-            state: None,
-            #[cfg(target_arch = "wasm32")]
-            proxy,
-        }
-    }
-
-    
-    pub fn handle_mouse_moved(&mut self, position: winit::dpi::PhysicalPosition<f64>){
-        thread::sleep(Duration::from_secs(0.5));
-        println!("MOVED");
-
-    }
-}
-
-
-
-
-
-
-
-// ------------------------------- HANDELER
-
-impl ApplicationHandler<State> for App {
-    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        #[allow(unused_mut)]
-        let mut window_attributes = Window::default_attributes();
-
-        #[cfg(target_arch = "wasm32")]
-        {
-            use wasm_bindgen::JsCast;
-            use winit::platform::web::WindowAttributesExtWebSys;
-
-            const CANVAS_ID: &str = "canvas";
-
-            let window = wgpu::web_sys::window().unwrap_throw();
-            let document = window.document().unwrap_throw();
-            let canvas = document.get_element_by_id(CANVAS_ID).unwrap_throw();
-            let html_canvas_element = canvas.unchecked_into();
-            window_attributes = window_attributes.with_canvas(Some(html_canvas_element));
-        }
-
-        let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
-
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            // If we are not on web we can use pollster to
-            // await the
-            self.state = Some(pollster::block_on(State::new(window)).unwrap());
-        }
-
-        #[cfg(target_arch = "wasm32")]
-        {
-            // Run the future asynchronously and use the
-            // proxy to send the results to the event loop
-            if let Some(proxy) = self.proxy.take() {
-                wasm_bindgen_futures::spawn_local(async move {
-                    assert!(proxy
-                        .send_event(
-                            State::new(window)
-                                .await
-                                .expect("Unable to create canvas!!!")
-                        )
-                        .is_ok())
-                });
-            }
-        }
-    }
-
-    #[allow(unused_mut)]
-    fn user_event(&mut self, _event_loop: &ActiveEventLoop, mut event: State) {
-        #[cfg(target_arch = "wasm32")]
-        {
-            event.window.request_redraw();
-            event.resize(
-                event.window.inner_size().width,
-                event.window.inner_size().height,
-            );
-        }
-        self.state = Some(event);
-    }
-
-
-    fn window_event(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        _window_id: winit::window::WindowId,
-        event: WindowEvent,
-    ) {
-        let state = match &mut self.state {
-            Some(canvas) => canvas,
-            None => return,
-        };
-
-        match event {
-            WindowEvent::CloseRequested => event_loop.exit(),
-            WindowEvent::Resized(size) => state.resize(size.width, size.height),
-            WindowEvent::CursorMoved { position, .. } => {
-                self.handle_mouse_moved(position);}
-            WindowEvent::RedrawRequested => {
-            state.update();
-            match state.render() {
-                    Ok(_) => {}
-                    Err(e) => {
-                        // Log the error and exit gracefully
-                        log::error!("{e}");
-                        event_loop.exit();
-                    }
-                }
-            }
-            WindowEvent::KeyboardInput {
-                event:
-                    KeyEvent {
-                        physical_key: PhysicalKey::Code(code),
-                        state: key_state,
-                        ..
-                    },
-                ..
-            } => state.handle_key(event_loop, code, key_state.is_pressed()),
-                _ => {}
-        }
-    }
-}
-
-
-
-
-
-
-
-
-
-pub fn run() -> anyhow::Result<()> {
-
-
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        env_logger::init();
-    }
-    #[cfg(target_arch = "wasm32")]
-    {
-        console_log::init_with_level(log::Level::Info).unwrap_throw();
-    }
-
-    let event_loop = EventLoop::with_user_event().build()?;
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let mut app = App::new();
-        event_loop.run_app(&mut app)?;
-    }
-    #[cfg(target_arch = "wasm32")]
-    {
-        let app = App::new(&event_loop);
-        event_loop.spawn_app(app);
-    }
-
-    Ok(())
-}
-
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen(start)]
-pub fn run_web() -> Result<(), wasm_bindgen::JsValue> {
-    console_error_panic_hook::set_once();
-    run().unwrap_throw();
-
-    Ok(())
-}
