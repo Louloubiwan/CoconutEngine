@@ -1,28 +1,18 @@
 mod render;
-
-
-
 use std::sync::Arc;
-
 use winit::{
     application::ApplicationHandler,
     event::*,
     event_loop::{ActiveEventLoop, EventLoop},
     keyboard::{KeyCode, PhysicalKey},
-  
     window::Window,
 };
-
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use winit::platform::web::EventLoopExtWebSys;
 
-
-
-
-// State de l'éditeur
 pub struct State {
     surface: wgpu::Surface<'static>,
     device: wgpu::Device,
@@ -32,9 +22,6 @@ pub struct State {
     render_pipeline: wgpu::RenderPipeline,
     window: Arc<Window>,
 }
-
-// --------------------
-
 
 pub struct App {
     #[cfg(target_arch = "wasm32")]
@@ -52,11 +39,7 @@ impl App {
             proxy,
         }
     }
-
 }
-
-
-// ------------------------------- HANDELER ------------------------
 
 impl ApplicationHandler<State> for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
@@ -92,13 +75,15 @@ impl ApplicationHandler<State> for App {
             // proxy to send the results to the event loop
             if let Some(proxy) = self.proxy.take() {
                 wasm_bindgen_futures::spawn_local(async move {
-                    assert!(proxy
-                        .send_event(
-                            State::new(window)
-                                .await
-                                .expect("Unable to create canvas!!!")
-                        )
-                        .is_ok())
+                    assert!(
+                        proxy
+                            .send_event(
+                                State::new(window)
+                                    .await
+                                    .expect("Unable to create canvas!!!")
+                            )
+                            .is_ok()
+                    )
                 });
             }
         }
@@ -117,7 +102,6 @@ impl ApplicationHandler<State> for App {
         self.state = Some(event);
     }
 
-
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -132,13 +116,12 @@ impl ApplicationHandler<State> for App {
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => state.resize(size.width, size.height),
-            WindowEvent::CursorMoved {position, ..} => state.handle_mouse_moved(position),
+            WindowEvent::CursorMoved { position, .. } => state.handle_mouse_moved(position),
             WindowEvent::RedrawRequested => {
-            state.update();
-            match state.render() {
+                state.update();
+                match state.render() {
                     Ok(_) => {}
                     Err(e) => {
-                        // Log the error and exit gracefully
                         log::error!("{e}");
                         event_loop.exit();
                     }
@@ -153,36 +136,12 @@ impl ApplicationHandler<State> for App {
                     },
                 ..
             } => state.handle_key(event_loop, code, key_state.is_pressed()),
-                _ => {}
+            _ => {}
         }
     }
 }
 
-//---------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ------------- RUN -----------------
-
 pub fn run() -> anyhow::Result<()> {
-
-
-
     #[cfg(not(target_arch = "wasm32"))]
     {
         env_logger::init();
@@ -191,7 +150,6 @@ pub fn run() -> anyhow::Result<()> {
     {
         console_log::init_with_level(log::Level::Info).unwrap_throw();
     }
-
     let event_loop = EventLoop::with_user_event().build()?;
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -212,6 +170,5 @@ pub fn run() -> anyhow::Result<()> {
 pub fn run_web() -> Result<(), wasm_bindgen::JsValue> {
     console_error_panic_hook::set_once();
     run().unwrap_throw();
-
     Ok(())
 }
