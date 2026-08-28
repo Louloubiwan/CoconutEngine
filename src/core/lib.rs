@@ -9,6 +9,7 @@ use winit::{
     event::*,
     event_loop::{ActiveEventLoop, EventLoop},
     keyboard::{KeyCode, PhysicalKey},
+  
     window::Window,
 };
 
@@ -21,7 +22,6 @@ use winit::platform::web::EventLoopExtWebSys;
 
 
 
-
 // State de l'éditeur
 pub struct State {
     surface: wgpu::Surface<'static>,
@@ -29,6 +29,7 @@ pub struct State {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     is_surface_configured: bool,
+    render_pipeline: wgpu::RenderPipeline,
     window: Arc<Window>,
 }
 

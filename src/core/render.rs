@@ -4,6 +4,7 @@ use winit::{
     event_loop::ActiveEventLoop,
     keyboard::KeyCode,
     window::Window,
+
 };
 
 
@@ -87,15 +88,83 @@ impl State {
         let _modes = &surface_caps.present_modes;
 
 
-        Ok(State {
-            surface,
-            device,
-            queue,
-            config,
-            is_surface_configured: false,
-            window,
+
+
+
+        //
+        // -------------Shaders----------------------
+        //
+        let shader = device.create_shader_module(wgpu::include_wgsl!("../shader.wgsl"));
+        let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: Some("Render Pipeline Layout"),
+        bind_group_layouts: &[],
+        immediate_size: 0, });
+
+       let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+         label: Some("Render Pipeline"),
+         layout: Some(&render_pipeline_layout),
+         vertex: wgpu::VertexState {
+            module: &shader,
+            entry_point: Some("vs_main"), // function from the wgsl 
+            buffers: &[],
+            compilation_options: wgpu::PipelineCompilationOptions::default(),
+        },
+        fragment: Some(wgpu::FragmentState {
+            module: &shader,
+            entry_point: Some("fs_main"), // function from wgsl
+            targets: &[Some(wgpu::ColorTargetState { // which color use
+                format: config.format,
+                blend: Some(wgpu::BlendState::REPLACE),
+                write_mask: wgpu::ColorWrites::ALL,
+            })],
+            compilation_options: wgpu::PipelineCompilationOptions::default(),
+        }),
+
+        primitive: wgpu::PrimitiveState { // interpretate to make a triangle
+            topology: wgpu::PrimitiveTopology::TriangleList, // 1.
+            strip_index_format: None,
+            front_face: wgpu::FrontFace::Ccw, // triangle face forward
+            cull_mode: Some(wgpu::Face::Back),
+            // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+            polygon_mode: wgpu::PolygonMode::Fill,
+            // Requires Features::DEPTH_CLIP_CONTROL
+            unclipped_depth: false,
+            // Requires Features::CONSERVATIVE_RASTERIZATION
+            conservative: false,
+          },
+
+
+        depth_stencil: None,
+         multisample: wgpu::MultisampleState {
+            count: 1, // determines how many samples the pipeline will use 
+            mask: !0, // specifies which samples should be active
+            alpha_to_coverage_enabled: false, // antialiasing
+         },
+        multiview_mask: None, // indicates how many array layers the render attachments can have
+        cache: None, 
+
+       });
+
+
+      Ok(State {
+        surface,
+        device,
+        queue,
+        config,
+        is_surface_configured: false,
+        render_pipeline,
+        window,
+
         })
-    }
+  }
+
+
+
+// ---------------------------------------------------------------------------
+//
+//
+
+
 
     pub fn resize(&mut self, width: u32, height: u32) {
         if width > 0 && height > 0 {
@@ -166,7 +235,7 @@ impl State {
 
 
         {
-        let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view: &view,
@@ -187,6 +256,8 @@ impl State {
             timestamp_writes: None,
             multiview_mask: None,
         });
+        render_pass.set_pipeline(&self.render_pipeline); // 2.
+        render_pass.draw(0..3, 0..1); // 3.
     }
 
      // submit will accept anything that implements IntoIter
