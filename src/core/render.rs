@@ -47,8 +47,9 @@ impl State {
                 },
                 memory_hints: Default::default(),
                 trace: wgpu::Trace::Off,
-            })
-            .await?;
+            }).await?;
+
+
 
         let surface_caps = surface.get_capabilities(&adapter);
         let surface_format = surface_caps
@@ -99,7 +100,8 @@ impl State {
                 immediate_size: 0,
             });
 
-        // ----Vertex buffers---- 
+        // ----Vertex buffers----
+        let num_vertices = VERTICES.len() as u32; // number of vertices we will use
         let vertex_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
@@ -108,15 +110,16 @@ impl State {
                 }
             );
 
-        
 
+        
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
-                buffers: &[],
+                buffers: &[ Some(Vertex::desc()),
+                ],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -163,6 +166,7 @@ impl State {
             render_pipeline,
             window,
             vertex_buffer,
+            num_vertices,
         })
     }
 
@@ -235,8 +239,8 @@ impl State {
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
                             r: 0.6,
-                            g: 0.2,
-                            b: 0.3,
+                            g: 0.87,
+                            b: 1.0,
                             a: 1.0,
                         }),
                         store: wgpu::StoreOp::Store,
@@ -248,7 +252,9 @@ impl State {
                 multiview_mask: None,
             });
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.draw(0..3, 0..1);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.draw(0..self.num_vertices, 0..1);
+
         }
 
         // submit will accept anything that implements IntoIter

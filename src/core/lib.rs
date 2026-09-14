@@ -23,6 +23,7 @@ pub struct State {
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: wgpu::Buffer,
     window: Arc<Window>,
+    num_vertices: u32,
 }
 
 pub struct App {
