@@ -1,4 +1,5 @@
 mod render;
+mod vertex_buffer;
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
@@ -20,6 +21,7 @@ pub struct State {
     config: wgpu::SurfaceConfiguration,
     is_surface_configured: bool,
     render_pipeline: wgpu::RenderPipeline,
+    vertex_buffer: wgpu::Buffer,
     window: Arc<Window>,
 }
 

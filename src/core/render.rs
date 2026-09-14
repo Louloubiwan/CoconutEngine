@@ -1,6 +1,11 @@
 use crate::State;
+
+use crate::vertex_buffer::*;
+
 use std::sync::Arc;
 use winit::{event_loop::ActiveEventLoop, keyboard::KeyCode, window::Window};
+use wgpu::util::DeviceExt;
+
 
 impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<State> {
@@ -94,6 +99,17 @@ impl State {
                 immediate_size: 0,
             });
 
+        // ----Vertex buffers---- 
+        let vertex_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(VERTICES),
+                usage: wgpu::BufferUsages::VERTEX,
+                }
+            );
+
+        
+
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
             layout: Some(&render_pipeline_layout),
@@ -146,6 +162,7 @@ impl State {
             is_surface_configured: false,
             render_pipeline,
             window,
+            vertex_buffer,
         })
     }
 
@@ -230,8 +247,8 @@ impl State {
                 timestamp_writes: None,
                 multiview_mask: None,
             });
-            render_pass.set_pipeline(&self.render_pipeline); // 2.
-            render_pass.draw(0..3, 0..1); // 3.
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.draw(0..3, 0..1);
         }
 
         // submit will accept anything that implements IntoIter
