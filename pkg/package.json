@@ -1,0 +1,15 @@
+{
+  "name": "CoconutEngine",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "CoconutEngine_bg.wasm",
+    "CoconutEngine.js",
+    "CoconutEngine.d.ts"
+  ],
+  "main": "CoconutEngine.js",
+  "types": "CoconutEngine.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
