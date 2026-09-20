@@ -3,7 +3,7 @@
 !src/**
 !src/core
 !src/core/**
-!pkg/**
+
 
 !.gitignore
 !Cargo.lock

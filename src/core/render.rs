@@ -100,7 +100,7 @@ impl State {
                 immediate_size: 0,
             });
 
-        // ----Vertex buffers----
+        // ----BUFFERS----
         let num_vertices = VERTICES.len() as u32; // number of vertices we will use
         let vertex_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
@@ -109,6 +109,14 @@ impl State {
                 usage: wgpu::BufferUsages::VERTEX,
                 }
             );
+        let index_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(INDICES),
+                usage: wgpu::BufferUsages::INDEX,
+            }
+        );
+        let num_indices = INDICES.len() as u32;
 
 
         
@@ -167,6 +175,8 @@ impl State {
             window,
             vertex_buffer,
             num_vertices,
+            index_buffer,
+            num_indices,
         })
     }
 
@@ -253,7 +263,9 @@ impl State {
             });
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.draw(0..self.num_vertices, 0..1);
+           render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16); 
+            render_pass.draw_indexed(0..self.num_indices, 0, 0..1); 
+            // render_pass.draw(0..self.num_vertices, 0..1);
 
         }
 
@@ -265,6 +277,6 @@ impl State {
     }
 
     pub fn update(&mut self) {
-        // remo
+    
     }
 }

@@ -5,5 +5,9 @@
 use CoconutEngine::run;
 
 fn main() {
+    println!("-------------------CoconutEngine V0.1 -------------------
+        \n \n-------------------By Louloubiwan -------------------");
+
+
     run().unwrap();
 }
