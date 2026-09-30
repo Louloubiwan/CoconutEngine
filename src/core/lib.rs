@@ -1,5 +1,9 @@
+
 mod render;
 mod vertex_buffer;
+mod texture;
+
+
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
@@ -26,6 +30,8 @@ pub struct State {
     num_vertices: u32,
     index_buffer: wgpu::Buffer, 
     num_indices: u32,
+    diffuse_bind_group: wgpu::BindGroup,
+    diffuse_texture: texture::Texture,
 }
 
 pub struct App {
@@ -70,7 +76,7 @@ impl ApplicationHandler<State> for App {
         #[cfg(not(target_arch = "wasm32"))]
         {
             // If we are not on web we can use pollster to
-            // await the
+            // await the window creation
             self.state = Some(pollster::block_on(State::new(window)).unwrap());
         }
 
@@ -121,7 +127,7 @@ impl ApplicationHandler<State> for App {
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => state.resize(size.width, size.height),
-            WindowEvent::CursorMoved { position, .. } => state.handle_mouse_moved(position),
+            // WindowEvent::CursorMoved { position, .. } => state.handle_mouse_moved(position),
             WindowEvent::RedrawRequested => {
                 state.update();
                 match state.render() {

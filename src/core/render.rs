@@ -2,6 +2,9 @@ use crate::State;
 
 use crate::vertex_buffer::*;
 
+use crate::texture::*;
+
+
 use std::sync::Arc;
 use winit::{event_loop::ActiveEventLoop, keyboard::KeyCode, window::Window};
 use wgpu::util::DeviceExt;
@@ -51,6 +54,7 @@ impl State {
 
 
 
+
         let surface_caps = surface.get_capabilities(&adapter);
         let surface_format = surface_caps
             .formats
@@ -70,8 +74,8 @@ impl State {
 
         let limits = adapter.limits();
         let caps = surface.get_capabilities(&adapter);
-        println!("INFO GPU : {:?}", caps);
-        println!("MAX RESOLUTION : {:?}", limits);
+        //println!("INFO GPU : {:?}", caps);
+        //println!("MAX RESOLUTION : {:?}", limits);
 
         // This defines how the surface and its rendered frames will be configured.
         // We define its width, height and presentation mode.
@@ -89,18 +93,75 @@ impl State {
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
             color_space: wgpu::SurfaceColorSpace::Auto,
-        };
+         };
+
+        let diffuse_bytes = include_bytes!("../assets/cat.jpeg"); // load texture
+        let diffuse_texture = Texture::from_bytes(&device, &queue, diffuse_bytes, "../assets/cat.jpeg").unwrap();
+
+
+
+
+
+        // ----------------- TEXTURE--------------------
+     
+        // define how it can be accessible by shaders
+        let texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        // This should match the filterable field of the
+                        // corresponding Texture entry above.
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+                label: Some("texture_bind_group_layout"),
+            });
+
+         let diffuse_bind_group = device.create_bind_group(
+            &wgpu::BindGroupDescriptor {
+              layout: &texture_bind_group_layout,
+              entries: &[
+                wgpu::BindGroupEntry {
+                  binding: 0,
+                  resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
+                  },
+                wgpu::BindGroupEntry {
+                  binding: 1,
+                  resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
+                }],
+           label: Some("diffuse_bind_group"),
+           }
+        );
+
+
+
+        // ---------------------------------------
+
+
+
 
         let _modes = &surface_caps.present_modes;
         let shader = device.create_shader_module(wgpu::include_wgsl!("shaders/main.wgsl"));
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[],
-                immediate_size: 0,
-            });
+        let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("Render Pipeline Layout"),
+            bind_group_layouts: &[Some(&texture_bind_group_layout)],
+            immediate_size: 0,
+        });
 
-        // ----BUFFERS----
+        //-----------BUFFERS-------------
         let num_vertices = VERTICES.len() as u32; // number of vertices we will use
         let vertex_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
@@ -117,6 +178,8 @@ impl State {
             }
         );
         let num_indices = INDICES.len() as u32;
+
+
 
 
         
@@ -177,6 +240,8 @@ impl State {
             num_vertices,
             index_buffer,
             num_indices,
+            diffuse_bind_group,
+            diffuse_texture,
         })
     }
 
@@ -262,8 +327,9 @@ impl State {
                 multiview_mask: None,
             });
             render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-           render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16); 
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16); 
             render_pass.draw_indexed(0..self.num_indices, 0, 0..1); 
             // render_pass.draw(0..self.num_vertices, 0..1);
 
