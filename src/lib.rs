@@ -1,7 +1,20 @@
 
-mod render;
-mod vertex_buffer;
-mod texture;
+pub mod core {
+    #[path = "vertex_buffer.rs"]
+    pub mod vertex_buffer;
+
+    #[path = "render.rs"]
+    pub mod render;
+}
+
+pub mod engine {
+    #[path = "camera.rs"]
+    pub mod camera;
+
+
+    #[path = "texture.rs"]
+    pub mod texture;
+}
 
 
 use std::sync::Arc;
@@ -31,7 +44,7 @@ pub struct State {
     index_buffer: wgpu::Buffer, 
     num_indices: u32,
     diffuse_bind_group: wgpu::BindGroup,
-    diffuse_texture: texture::Texture,
+    diffuse_texture: engine::texture::Texture,
 }
 
 pub struct App {

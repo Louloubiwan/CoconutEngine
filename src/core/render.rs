@@ -1,8 +1,8 @@
 use crate::State;
 
-use crate::vertex_buffer::*;
+use crate::core::vertex_buffer::*;
 
-use crate::texture::*;
+use crate::engine::texture::*;
 
 
 use std::sync::Arc;
