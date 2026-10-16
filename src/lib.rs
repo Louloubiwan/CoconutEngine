@@ -45,6 +45,10 @@ pub struct State {
     num_indices: u32,
     diffuse_bind_group: wgpu::BindGroup,
     diffuse_texture: engine::texture::Texture,
+    camera: engine::camera::Camera,
+    camera_uniform: engine::camera::CameraUniform,
+    camera_buffer: wgpu::Buffer,
+    camera_bind_group: wgpu::BindGroup,
 }
 
 pub struct App {
