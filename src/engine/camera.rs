@@ -76,7 +76,7 @@ impl CameraController {
             is_forward_pressed: false,
             is_backward_pressed: false,
             is_left_pressed: false,
-            is_right_pressed: false,
+            is_right_pressed: true,
         }
     }
 
