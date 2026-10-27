@@ -172,6 +172,8 @@ impl State {
         let mut camera_uniform = CameraUniform::new();
         camera_uniform.update_view_proj(&camera);
 
+        let camera_controller = CameraController::new(0.25);
+
         let camera_buffer = device.create_buffer_init( &wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
             contents: bytemuck::cast_slice(&[camera_uniform]),
@@ -207,6 +209,8 @@ impl State {
         ],
         label: Some("camera_bind_group"),
         });
+        
+        
 
 
 
@@ -308,6 +312,7 @@ impl State {
             camera_buffer,
             camera_uniform,
             camera_bind_group,
+            camera_controller,
         })
     }
 
@@ -322,12 +327,15 @@ impl State {
     }
 
     // Escape exit the app
-    pub fn handle_key(&self, event_loop: &ActiveEventLoop, code: KeyCode, is_pressed: bool) {
-        match (code, is_pressed) {
-            (KeyCode::Escape, true) => event_loop.exit(),
-            _ => {}
+
+   pub fn handle_key(&mut self, event_loop: &ActiveEventLoop, code: KeyCode, is_pressed: bool) {
+        if code == KeyCode::Escape && is_pressed {
+            event_loop.exit();
+        } else {
+            self.camera_controller.handle_key(code, is_pressed);
         }
     }
+
 
     pub fn handle_mouse_moved(&mut self, _position: winit::dpi::PhysicalPosition<f64>) {
         println!("MOUSE MOVED");
@@ -411,6 +419,8 @@ impl State {
     }
 
     pub fn update(&mut self) {
-    
+    self.camera_controller.update_camera(&mut self.camera);
+    self.camera_uniform.update_view_proj(&self.camera);
+    self.queue.write_buffer(&self.camera_buffer, 0, bytemuck::cast_slice(&[self.camera_uniform])); 
     }
 }

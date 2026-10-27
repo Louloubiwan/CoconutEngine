@@ -49,6 +49,7 @@ pub struct State {
     camera_uniform: engine::camera::CameraUniform,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
+    camera_controller: engine::camera::CameraController,
 }
 
 pub struct App {
