@@ -74,8 +74,14 @@ impl State {
 
         let limits = adapter.limits();
         let caps = surface.get_capabilities(&adapter);
+       
+        println!("GPU INFO : {:?}", adapter.get_info());
+
         //println!("INFO GPU : {:?}", caps);
         //println!("MAX RESOLUTION : {:?}", limits);
+
+
+
 
         // This defines how the surface and its rendered frames will be configured.
         // We define its width, height and presentation mode.
@@ -298,6 +304,7 @@ impl State {
             surface,
             device,
             queue,
+            adapter,
             config,
             is_surface_configured: false,
             render_pipeline,
