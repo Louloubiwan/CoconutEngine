@@ -92,8 +92,8 @@ impl State {
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: size.width,
-            height: size.height,
+            width: size.width.max(1),
+            height: size.height.max(1),
             present_mode,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
@@ -328,6 +328,7 @@ impl State {
             let max = 2048; // ajoute une limite pour WebGL
             self.config.width = width.min(max);
             self.config.height = height.min(max);
+            self.camera.aspect = self.config.width as f32 / self.config.height as f32;
             self.surface.configure(&self.device, &self.config);
             self.is_surface_configured = true;
         }
