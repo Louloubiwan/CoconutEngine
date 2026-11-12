@@ -5,6 +5,9 @@ pub mod core {
 
     #[path = "render.rs"]
     pub mod render;
+
+    #[path = "instance.rs"]
+    pub mod instance;
 }
 
 pub mod engine {
@@ -25,6 +28,9 @@ use winit::{
     keyboard::{KeyCode, PhysicalKey},
     window::Window,
 };
+
+use crate::core::instance::Instance;
+
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -51,6 +57,8 @@ pub struct State {
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
     camera_controller: engine::camera::CameraController,
+    instances: Vec<Instance>,
+    instance_buffer: wgpu::Buffer,
 }
 
 pub struct App {
