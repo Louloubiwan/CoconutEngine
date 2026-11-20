@@ -59,6 +59,7 @@ pub struct State {
     camera_controller: engine::camera::CameraController,
     instances: Vec<Instance>,
     instance_buffer: wgpu::Buffer,
+    depth_texture: engine::texture::Texture
 }
 
 pub struct App {
